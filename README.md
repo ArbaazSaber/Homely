@@ -4,7 +4,7 @@ An all in one Home Management App!
 # INVENTORY
 # Features to Add
 
-- Search Funtionality
+- ~~Search Funtionality~~
 - Filter on Categories
 - Login Page
 - Add User Authentication
