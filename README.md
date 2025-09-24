@@ -6,6 +6,7 @@ An all in one Home Management App!
 
 - ~~Search Funtionality~~
 - ~~Filter on Categories and Locations~~
+- Connect Database to Flutter
 - Login Page
 - Add User Authentication
     - First Simple - Code for User and Family
