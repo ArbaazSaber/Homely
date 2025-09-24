@@ -5,7 +5,7 @@ An all in one Home Management App!
 # Features to Add
 
 - ~~Search Funtionality~~
-- Filter on Categories
+- ~~Filter on Categories and Locations~~
 - Login Page
 - Add User Authentication
     - First Simple - Code for User and Family

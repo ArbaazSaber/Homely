@@ -18,6 +18,8 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
   bool isSearchMode = false;
   late TextEditingController _searchController;
 
+  Set<String> selectedCategories = allCategories.toSet();
+  Set<String> selectedLocations = allLocations.toSet();
   List<InventoryItem> filteredItems = dummyInventoryItems;
 
   @override
@@ -32,46 +34,132 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
     super.dispose();
   }
 
-  // void filterSearchResults(String query) {
-  //   if (query.isEmpty) {
-  //     setState(() {
-  //       filteredItems = dummyInventoryItems;
-  //     });
-  //   } else {
-  //     setState(() {
-  //       filteredItems = dummyInventoryItems
-  //           .where(
-  //             (item) =>
-  //                 item.name.toLowerCase().contains(query.toLowerCase()) ||
-  //                 item.category.toLowerCase().contains(query.toLowerCase()) ||
-  //                 item.location.toLowerCase().contains(query.toLowerCase()),
-  //           )
-  //           .toList();
-  //     });
-  //   }
-  // }
+  void filterItems() {
+    final q = _searchController.text.toLowerCase();
 
-  void filterSearchResults(String query) {
-    final q = query.toLowerCase();
-    if (query.isEmpty) {
-      setState(() {
-        filteredItems = dummyInventoryItems;
-      });
-      return;
-    }
+    bool matchesItem(InventoryItem item) =>
+      selectedCategories.contains(item.category) &&
+      selectedLocations.contains(item.location) &&
+      (q.isEmpty || 
+        item.name.toLowerCase().contains(q) || 
+        partialRatio(item.name.toLowerCase(), q) >= (q.length < 4 ? 70 : 85));
+
     setState(() {
-      filteredItems = dummyInventoryItems.where((item) {
-        final String itemName = item.name.toLowerCase();
-        if (itemName.contains(q)) return true; // Exact match found
-
-        // Fuzzy match check
-        final nameScore = partialRatio(itemName, q);
-
-        int threshold = q.length < 4 ? 70 : 85;
-        
-        return nameScore >= threshold; // Adjust threshold as needed
-      }).toList();
+      filteredItems = dummyInventoryItems.where(matchesItem).toList();
     });
+  }
+
+  void applyFilter() {
+    filterItems();
+    Navigator.of(context).pop(); // Close the dialog
+  }
+
+  void toggleSelection(
+    Set<String> set,
+    String value,
+    void Function(void Function()) setStateDialog,
+  ) {
+    setStateDialog(() {
+      if (set.contains(value)) {
+        set.remove(value);
+      } else {
+        set.add(value);
+      }
+    });
+  }
+
+  void showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            title: Text("Filter Items"),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Category"),
+                  SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      FilterChip(
+                        label: const Text('All'),
+                        selected:
+                            selectedCategories.length == allCategories.length,
+                        onSelected: (bool selected) {
+                          setStateDialog(() {
+                            if (selected) {
+                              selectedCategories = allCategories.toSet();
+                            } else {
+                              selectedCategories.clear();
+                            }
+                          });
+                        },
+                      ),
+                      ...allCategories.map((category) {
+                        return FilterChip(
+                          label: Text(category),
+                          selected: selectedCategories.contains(category),
+                          onSelected: (bool selected) => toggleSelection(
+                            selectedCategories,
+                            category,
+                            setStateDialog,
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text("Location"),
+                  SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      FilterChip(
+                        label: const Text('All'),
+                        selected:
+                            selectedLocations.length == allLocations.length,
+                        onSelected: (bool selected) {
+                          setStateDialog(() {
+                            if (selected) {
+                              selectedLocations = allLocations.toSet();
+                            } else {
+                              selectedLocations.clear();
+                            }
+                          });
+                        },
+                      ),
+                      ...allLocations.map((location) {
+                        return FilterChip(
+                          label: Text(location),
+                          selected: selectedLocations.contains(location),
+                          onSelected: (bool selected) => toggleSelection(
+                            selectedLocations,
+                            location,
+                            setStateDialog,
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(onPressed: applyFilter, child: Text('Filter')),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   void openSearch() {
@@ -84,7 +172,7 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
           hintText: 'Search...',
           border: InputBorder.none,
         ),
-        onChanged: filterSearchResults,
+        onChanged: (String query) => filterItems(),
       );
     });
   }
@@ -93,7 +181,7 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
     setState(() {
       isSearchMode = false;
       _searchController.clear();
-      filteredItems = dummyInventoryItems; // reset full list
+      filterItems();
       appBarTitle = const Text('Inventory Screen');
     });
   }
@@ -114,7 +202,10 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
                   onPressed: openSearch,
                   icon: const Icon(Icons.search),
                 ),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.filter_list_alt)),
+          IconButton(
+            onPressed: showFilterDialog,
+            icon: const Icon(Icons.filter_list_alt),
+          ),
         ],
       ),
       body: ListView.builder(
