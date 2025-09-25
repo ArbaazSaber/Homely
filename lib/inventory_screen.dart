@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
+import 'package:homely/model/category.dart';
+import 'package:homely/model/user.dart' as user;
+import 'package:homely/model/location.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:homely/data/inventory_items.dart';
 import 'package:homely/model/inventory_item.dart';
 import 'package:homely/widget/list_item_tile.dart';
 import 'package:homely/widget/add_update_dialog.dart';
@@ -14,17 +17,25 @@ class InvetoryScreen extends StatefulWidget {
 }
 
 class _InvetoryScreenState extends State<InvetoryScreen> {
+  final supabase = Supabase.instance.client;
+
+  late List<Category> allCategories;
+  late List<Location> allLocations;
+  late List<InventoryItem> allItems;
+  late Set<Category> selectedCategories;
+  late Set<Location> selectedLocations;
+  late Set<InventoryItem> filteredItems;
+
   Widget appBarTitle = const Text('Inventory Screen');
   bool isSearchMode = false;
   late TextEditingController _searchController;
-
-  Set<String> selectedCategories = allCategories.toSet();
-  Set<String> selectedLocations = allLocations.toSet();
-  List<InventoryItem> filteredItems = dummyInventoryItems;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    loadCategoriesAndLocations();
+    loadItems();
     _searchController = TextEditingController();
   }
 
@@ -34,18 +45,45 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
     super.dispose();
   }
 
+  void loadCategoriesAndLocations() async {
+    final responseCategories = await supabase.from('categories').select();
+    final responseLocations = await supabase.from('locations').select();
+
+    setState(() {
+      allCategories = List<Category>.from(
+        responseCategories.map((e) => Category.fromJson(e)),
+      );
+      allLocations = List<Location>.from(
+        responseLocations.map((e) => Location.fromJson(e)),
+      );
+      selectedCategories = allCategories.toSet();
+      selectedLocations = allLocations.toSet();
+    });
+  }
+
+  void loadItems() async {
+    final responseItems = await supabase.from('inventory_items').select();
+    setState(() {
+      allItems = List<InventoryItem>.from(
+        responseItems.map((e) => InventoryItem.fromJson(e)),
+      );
+      filteredItems = allItems.toSet();
+    });
+  }
+
   void filterItems() {
     final q = _searchController.text.toLowerCase();
 
     bool matchesItem(InventoryItem item) =>
-      selectedCategories.contains(item.category) &&
-      selectedLocations.contains(item.location) &&
-      (q.isEmpty || 
-        item.name.toLowerCase().contains(q) || 
-        partialRatio(item.name.toLowerCase(), q) >= (q.length < 4 ? 70 : 85));
+        selectedCategories.contains(item.category) &&
+        selectedLocations.contains(item.location) &&
+        (q.isEmpty ||
+            item.name.toLowerCase().contains(q) ||
+            partialRatio(item.name.toLowerCase(), q) >=
+                (q.length < 4 ? 70 : 85));
 
     setState(() {
-      filteredItems = dummyInventoryItems.where(matchesItem).toList();
+      filteredItems = allItems.where(matchesItem).toSet();
     });
   }
 
@@ -54,9 +92,9 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
     Navigator.of(context).pop(); // Close the dialog
   }
 
-  void toggleSelection(
-    Set<String> set,
-    String value,
+  void toggleSelection<T>(
+    Set<T> set,
+    T value,
     void Function(void Function()) setStateDialog,
   ) {
     setStateDialog(() {
@@ -101,13 +139,14 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
                       ),
                       ...allCategories.map((category) {
                         return FilterChip(
-                          label: Text(category),
+                          label: Text(category.name),
                           selected: selectedCategories.contains(category),
-                          onSelected: (bool selected) => toggleSelection(
-                            selectedCategories,
-                            category,
-                            setStateDialog,
-                          ),
+                          onSelected: (bool selected) =>
+                              toggleSelection<Category>(
+                                selectedCategories,
+                                category,
+                                setStateDialog,
+                              ),
                         );
                       }),
                     ],
@@ -135,13 +174,14 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
                       ),
                       ...allLocations.map((location) {
                         return FilterChip(
-                          label: Text(location),
+                          label: Text(location.name),
                           selected: selectedLocations.contains(location),
-                          onSelected: (bool selected) => toggleSelection(
-                            selectedLocations,
-                            location,
-                            setStateDialog,
-                          ),
+                          onSelected: (bool selected) =>
+                              toggleSelection<Location>(
+                                selectedLocations,
+                                location,
+                                setStateDialog,
+                              ),
                         );
                       }),
                     ],
@@ -211,7 +251,11 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
       body: ListView.builder(
         itemCount: filteredItems.length,
         itemBuilder: (context, index) {
-          return ListItemTile(filteredItems[index]);
+          return ListItemTile(
+            filteredItems.toList()[index],
+            allCategories: allCategories,
+            allLocations: allLocations,
+          );
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -221,7 +265,7 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
             function: 'Add',
             item: InventoryItem.empty(),
             categories: allCategories,
-            locations: allLocations,
+            locations: allLocations, currentUser: user.User.empty(),
           ),
         ),
         tooltip: 'Add Item',

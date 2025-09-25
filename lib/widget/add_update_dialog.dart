@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:homely/model/category.dart';
 import 'package:homely/model/inventory_item.dart';
+import 'package:homely/model/location.dart';
+import 'package:homely/model/user.dart';
 
 class AddUpdateDialog extends StatefulWidget {
   final InventoryItem item;
   final String function; // 'Add' or 'Update'
-  final List<String> categories; // from DB
-  final List<String> locations; // from DB
+  final List<Category> categories; // from DB
+  final List<Location> locations; // from DB
+  final User currentUser; // from DB
 
   const AddUpdateDialog({
     super.key,
@@ -13,6 +17,7 @@ class AddUpdateDialog extends StatefulWidget {
     required this.item,
     required this.categories,
     required this.locations,
+    required this.currentUser,
   });
 
   @override
@@ -23,8 +28,9 @@ class _AddUpdateDialogState extends State<AddUpdateDialog> {
   late TextEditingController nameController;
   late TextEditingController quantityController;
   late TextEditingController unitController;
-  String? selectedCategory;
-  String? selectedLocation;
+  bool replenishable = true;
+  Category? selectedCategory;
+  Location? selectedLocation;
 
   @override
   void initState() {
@@ -64,7 +70,10 @@ class _AddUpdateDialogState extends State<AddUpdateDialog> {
       unit: unitController.text,
       category: selectedCategory!,
       location: selectedLocation!,
-      updatedBy: 'Current User', // Replace with actual user
+      updatedBy: widget.currentUser,
+      family: widget.currentUser.family,
+      lastUpdated: DateTime.now(),
+      isReplenishable: replenishable, // Replace with actual user
     );
 
     // SUPABASE UPDATE LOGIC HERE

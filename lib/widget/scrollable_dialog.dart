@@ -10,9 +10,9 @@ class ScrollableDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final details = [
       ['Quantity', '${child.quantity} ${child.unit}'],
-      ['Category', child.category],
-      ['Location', child.location],
-      ['Updated by', child.updatedBy],
+      ['Category', child.category.name],
+      ['Location', child.location.name],
+      ['Updated by', child.updatedBy.name],
       ['Last updated', child.lastUpdated.toString()],
     ];
 
