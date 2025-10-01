@@ -26,7 +26,7 @@ class ListItemTile extends StatelessWidget {
         ),
       ),
       subtitle: Text(
-        'Quantity: ${item.quantity} ${item.unit}\nCategory: ${item.category}',
+        'Quantity: ${item.quantity} ${item.unit}\nCategory: ${item.category.name}',
       ),
       trailing: Text(
         item.location.name,

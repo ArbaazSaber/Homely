@@ -9,14 +9,14 @@ import 'package:homely/model/inventory_item.dart';
 import 'package:homely/widget/list_item_tile.dart';
 import 'package:homely/widget/add_update_dialog.dart';
 
-class InvetoryScreen extends StatefulWidget {
-  const InvetoryScreen({super.key});
+class InventoryScreen extends StatefulWidget {
+  const InventoryScreen({super.key});
 
   @override
-  State<InvetoryScreen> createState() => _InvetoryScreenState();
+  State<InventoryScreen> createState() => _InventoryScreenState();
 }
 
-class _InvetoryScreenState extends State<InvetoryScreen> {
+class _InventoryScreenState extends State<InventoryScreen> {
   final supabase = Supabase.instance.client;
 
   late List<Category> allCategories;
@@ -46,29 +46,78 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
   }
 
   void loadCategoriesAndLocations() async {
-    final responseCategories = await supabase.from('categories').select();
-    final responseLocations = await supabase.from('locations').select();
+    try {
+      final responseCategories = await supabase.from('categories').select();
+      final responseLocations = await supabase.from('locations').select();
 
-    setState(() {
-      allCategories = List<Category>.from(
-        responseCategories.map((e) => Category.fromJson(e)),
-      );
-      allLocations = List<Location>.from(
-        responseLocations.map((e) => Location.fromJson(e)),
-      );
-      selectedCategories = allCategories.toSet();
-      selectedLocations = allLocations.toSet();
-    });
+      if (mounted) {
+        setState(() {
+          allCategories = List<Category>.from(
+            responseCategories.map((e) => Category.fromJson(e)),
+          );
+          allLocations = List<Location>.from(
+            responseLocations.map((e) => Location.fromJson(e)),
+          );
+          selectedCategories = allCategories.toSet();
+          selectedLocations = allLocations.toSet();
+        });
+      }
+    } catch (e) {
+      print('Error loading categories and locations: $e');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   void loadItems() async {
-    final responseItems = await supabase.from('inventory_items').select();
-    setState(() {
-      allItems = List<InventoryItem>.from(
-        responseItems.map((e) => InventoryItem.fromJson(e)),
-      );
-      filteredItems = allItems.toSet();
-    });
+    try {
+      final responseItems = await supabase.from('inventory_items').select('''
+        *,
+        category:categories(name, category_id),
+        location:locations(name, location_id),
+        family:families(*),
+        updated_by:users(*, family:families(*))
+      ''');
+      
+      if (responseItems.isEmpty) {
+        print('No items found or response is null');
+        if (mounted) {
+          setState(() {
+            allItems = [];
+            filteredItems = {};
+            isLoading = false;
+          });
+        }
+        return;
+      }
+      
+      if (mounted) {
+        setState(() {
+          allItems = responseItems.map((e) {
+            try {
+              return InventoryItem.fromJson(e);
+            } catch (e) {
+              print('Error parsing item: $e');
+              return null;
+            }
+          }).whereType<InventoryItem>().toList();
+          
+          filteredItems = allItems.toSet();
+          isLoading = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      print('Error loading items: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   void filterItems() {
@@ -248,7 +297,12 @@ class _InvetoryScreenState extends State<InvetoryScreen> {
           ),
         ],
       ),
-      body: ListView.builder(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : allItems.isEmpty
+              ? const Center(child: Text('No items found'))
+              :
+      ListView.builder(
         itemCount: filteredItems.length,
         itemBuilder: (context, index) {
           return ListItemTile(

@@ -113,27 +113,27 @@ class _AddUpdateDialogState extends State<AddUpdateDialog> {
               ),
             ),
             SizedBox(height: 16),
-            DropdownMenu<String>(
+            DropdownMenu<Category>(
               enableSearch: true,
               enableFilter: true,
               menuHeight: 300,
               width: double.infinity,
               initialSelection: selectedCategory,
               dropdownMenuEntries: widget.categories
-                  .map((c) => DropdownMenuEntry(label: c, value: c))
+                  .map((c) => DropdownMenuEntry(label: c.name, value: c))
                   .toList(),
               onSelected: (val) => setState(() => selectedCategory = val),
               label: const Text('Category'),
             ),
             SizedBox(height: 16),
-            DropdownMenu<String>(
+            DropdownMenu<Location>(
               enableSearch: true,
               enableFilter: true,
               menuHeight: 300,
               width: double.infinity,
               initialSelection: selectedLocation,
               dropdownMenuEntries: widget.locations
-                  .map((c) => DropdownMenuEntry(label: c, value: c))
+                  .map((c) => DropdownMenuEntry(label: c.name, value: c))
                   .toList(),
               onSelected: (val) => setState(() => selectedLocation = val),
               label: const Text('Location'),

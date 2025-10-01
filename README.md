@@ -6,7 +6,8 @@ An all in one Home Management App!
 
 - ~~Search Funtionality~~
 - ~~Filter on Categories and Locations~~
-- Connect Database to Flutter
+- ~~Connect Database to Flutter~~
+- ~~Refactor Code to Match Supabase~~
 - Login Page
 - Add User Authentication
     - First Simple - Code for User and Family
@@ -20,6 +21,7 @@ An all in one Home Management App!
     - Flutter Functions
     - Add it to the Button
 - Fuzzy Search on Everything
+- Introduce Repository Pattern
 
 # Things to Learn
 
