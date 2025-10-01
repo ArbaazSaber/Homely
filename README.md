@@ -21,6 +21,7 @@ An all in one Home Management App!
     - Flutter Functions
     - Add it to the Button
 - Fuzzy Search on Everything
+- Conditionally show Item with Family is there are more than one items present in the list
 - Introduce Repository Pattern
 
 # Things to Learn

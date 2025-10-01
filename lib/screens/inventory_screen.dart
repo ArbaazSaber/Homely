@@ -26,10 +26,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
   late Set<Location> selectedLocations;
   late Set<InventoryItem> filteredItems;
 
-  Widget appBarTitle = const Text('Inventory Screen');
-  bool isSearchMode = false;
   late TextEditingController _searchController;
-  bool isLoading = true;
+  
+  Widget appBarTitle = const Text('Inventory Screen');
+  bool _isSearchMode = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -66,7 +67,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       print('Error loading categories and locations: $e');
       if (mounted) {
         setState(() {
-          isLoading = false;
+          _isLoading = false;
         });
       }
     }
@@ -88,7 +89,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           setState(() {
             allItems = [];
             filteredItems = {};
-            isLoading = false;
+            _isLoading = false;
           });
         }
         return;
@@ -106,7 +107,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           }).whereType<InventoryItem>().toList();
           
           filteredItems = allItems.toSet();
-          isLoading = false;
+          _isLoading = false;
         });
       }
     } catch (e, stackTrace) {
@@ -114,7 +115,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       print('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
-          isLoading = false;
+          _isLoading = false;
         });
       }
     }
@@ -253,7 +254,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   void openSearch() {
     setState(() {
-      isSearchMode = true;
+      _isSearchMode = true;
       appBarTitle = TextField(
         autofocus: true,
         controller: _searchController,
@@ -268,7 +269,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   void closeSearch() {
     setState(() {
-      isSearchMode = false;
+      _isSearchMode = false;
       _searchController.clear();
       filterItems();
       appBarTitle = const Text('Inventory Screen');
@@ -282,7 +283,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         title: appBarTitle,
         backgroundColor: Colors.deepPurple.shade200,
         actions: [
-          isSearchMode
+          _isSearchMode
               ? IconButton(
                   onPressed: closeSearch,
                   icon: const Icon(Icons.close),
@@ -297,7 +298,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ),
         ],
       ),
-      body: isLoading
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : allItems.isEmpty
               ? const Center(child: Text('No items found'))

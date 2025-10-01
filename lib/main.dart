@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:homely/screens/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'package:homely/inventory_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +24,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const InventoryScreen(),
+      home: const LoginScreen(),
     );
   }
 }
