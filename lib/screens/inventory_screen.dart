@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:homely/model/category.dart';
-import 'package:homely/model/user.dart' as user;
+import 'package:homely/model/user.dart' as userModel;
 import 'package:homely/model/location.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,7 +10,9 @@ import 'package:homely/widget/list_item_tile.dart';
 import 'package:homely/widget/add_update_dialog.dart';
 
 class InventoryScreen extends StatefulWidget {
-  const InventoryScreen({super.key});
+  const InventoryScreen(this.user, {super.key});
+
+  final userModel.User user;
 
   @override
   State<InventoryScreen> createState() => _InventoryScreenState();
@@ -75,13 +77,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   void loadItems() async {
     try {
-      final responseItems = await supabase.from('inventory_items').select('''
+      final responseItems = await supabase
+      .from('inventory_items')
+      .select('''
         *,
         category:categories(name, category_id),
         location:locations(name, location_id),
         family:families(*),
         updated_by:users(*, family:families(*))
-      ''');
+      ''')
+      .eq('family_id', widget.user.family.id);
       
       if (responseItems.isEmpty) {
         print('No items found or response is null');
@@ -320,7 +325,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             function: 'Add',
             item: InventoryItem.empty(),
             categories: allCategories,
-            locations: allLocations, currentUser: user.User.empty(),
+            locations: allLocations, currentUser: userModel.User.empty(),
           ),
         ),
         tooltip: 'Add Item',

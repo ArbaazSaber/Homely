@@ -9,8 +9,11 @@ An all in one Home Management App!
 - ~~Connect Database to Flutter~~
 - ~~Refactor Code to Match Supabase~~
 - Login Page
+    - ~~Pass the User to Next Screen~~
+    - ~~Filter based on the family~~
+    - Store this user as a state or Shared Preference
 - Add User Authentication
-    - First Simple - Code for User and Family
+    - ~~First Simple - Code for User and Family~~
     - Using Google API
 - Add New Inventory
     - Supabase API
